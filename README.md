@@ -1,5 +1,6 @@
 # connect4-AI
-Connect 4 lab for Computational Intelligence
+Connect 4 lab for Computational Intelligence.
+Default is player vs ai, but you can change it setting AI_VS_AI=True
 
 ## Things I tried
 
