@@ -4,8 +4,8 @@ import numpy as np
 import sys, pygame
 
 AI_VS_AI = False # set to True to let the AI play against itself
-START_PLAYER = 1 # 1 is AI, 0 is user
-DEPTH = 4 # increase to have more precise AI, but longer computational time
+START_PLAYER = 0 # 1 is AI, 0 is user
+DEPTH = 2 # increase to have more precise AI, but longer computational time
 
 NUM_COLUMNS = 7
 COLUMN_HEIGHT = 6
@@ -78,11 +78,6 @@ def reorder(moves):
     return ideal[np.in1d(ideal, moves, assume_unique=True)]
 
 def mandatory_move(moves, board, player): # immediate loss or win
-    bottom_row_opponent = board[int(not player)] & 34630287489 # 2216338399296 # mask to have the values in the bottom row
-    if bottom_row_opponent == 270532608:
-        return 2
-    elif bottom_row_opponent == 34628173824:
-        return 1
     for ply in moves:
         play(board, ply, int(not player))
         if four_in_a_row(board[int(not player)]):
@@ -122,61 +117,6 @@ def alpha_beta(board, player, depth, alpha, beta, table):
     if len(table) > MAX_TABLE_SIZE:
         [table.popitem(last=False) for _ in range(100)] # remove oldest 100 items      
     return max_eval
-
-def alpha_beta_opening(board, player, depth, alpha, beta, table, openings_data):
-    possible = reorder(valid_moves(board))
-    key = str(board[player]) + str(board[int(not player)]) 
-    imp_move = mandatory_move(possible, board, player)
-    if imp_move != -1:
-        return (imp_move, 1)
-    if depth == 0 or not any(possible):
-        if key in openings_data:
-            return None, openings_data[key]
-        else:
-            return None, 0
-    max_eval = (None, -1)
-    for ply in possible:
-        play(board, ply, player)
-        _, val = alpha_beta_opening(board, int(not player), depth - 1, -beta, -alpha, table, openings_data)
-        val = -val
-        take_back(board, ply, player)
-        if max_eval[0] is None or val > max_eval[1]:
-            max_eval = (ply, val)
-        alpha = max(alpha, val)
-        if beta <= alpha:
-            break     
-    return max_eval
-
-
-def load_database(filename):
-    data = dict()
-    with open(filename, 'r') as f:
-        for line in f:
-            line = line.strip().split(',')
-            val = line.pop()
-            if val == 'win':
-                val = 1
-            elif val == 'loss':
-                val = -1
-            else:
-                val = 0
-    
-            board = [0,0]
-            for count, p in enumerate(reversed(line)):
-                board[0] = board[0] << 1
-                board[1] = board[1] << 1
-                if p == 'x':
-                    board[0] |= 1
-                elif p == 'o':
-                    board[1] |= 1
-                if (count+1) % 6 == 0 and count != 41: # additional shift
-                    board[0] = board[0] << 1
-                    board[1] = board[1] << 1
-            key = str(board[0]) + str(board[1])
-            data[key] = val
-    return data
-
-openings_data = load_database('connect-4.data') # openings database: https://www.openml.org/d/40668
 
 pygame.init()
 pygame.display.set_caption('Connect 4')
@@ -225,16 +165,13 @@ player = START_PLAYER
 finish = False
 draw(board)
 
-first = True
-n = 0
+first_move = True
 while True:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
             sys.exit()
         if event.type == pygame.MOUSEBUTTONDOWN and AI_VS_AI == False and not finish:
-            if first:
-                first = False
             left = pygame.mouse.get_pressed()[0]
             if left and player == 0:
                 col = (pygame.mouse.get_pos()[0] - start_pos[0] + step/2) // step
@@ -244,14 +181,10 @@ while True:
                     draw(board, click=True)
 
     if (AI_VS_AI or player == 1) and not finish:
-        if player:
-            n += 1
         best_move = None
-        if first:
+        if first_move:
             best_move = 3 # middle column
-            first = False
-        elif n <= 4: 
-            best_move, _ = alpha_beta_opening(board, player, 7, -np.inf, np.inf, openings_data)
+            first_move = False
         else:
             best_move, _ = alpha_beta(board, player, DEPTH, -np.inf, np.inf, table)
         if best_move is None:

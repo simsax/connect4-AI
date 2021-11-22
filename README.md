@@ -1,6 +1,6 @@
 # connect4-AI
 Connect 4 lab for Computational Intelligence.
-Default is player vs ai, but you can change it setting AI_VS_AI=True
+Default is player vs AI, but you can change it setting AI_VS_AI=True
 
 ## Things I tried
 
@@ -10,4 +10,3 @@ Default is player vs ai, but you can change it setting AI_VS_AI=True
 - Reordering of columns to increase chance of pruning (center columns are better in general)
 - Avoid exploring the tree if there are forced moves
 - Saving the states in a dictionary since different plays can end up in the same configurations
-- Bonus: I tried to use John Tromp's database (https://www.openml.org/d/40668) for the openings, but I noticed that some 'draw' configurations are missing (not only the ones where the next move is forced) so for now I return 0 if a configuration is not found in the table.
